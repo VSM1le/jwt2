@@ -36,12 +36,11 @@ func (r *PostgreSQLRepository) CreateUser(ctx *fiber.Ctx, user models.User) erro
 	return nil
 }
 
-func (r *PostgreSQLRepository) GetUserByEmail(ctx *fiber.Ctx, email string) (*models.User, error) {
-	var user models.User
+func (r *PostgreSQLRepository) GetUserByEmail(ctx *fiber.Ctx, user models.User) (*models.User, error) {
 	query := `SELECT * FROM users WHERE email=$1`
-
-	err := r.db.GetContext(ctx.Context(), user, query, email)
+	err := r.db.GetContext(ctx.Context(), &user, query, user.Email)
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 	return &user, nil

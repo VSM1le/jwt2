@@ -10,33 +10,32 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func SelectProduct() fiber.Handler {
+func SelectCustomer() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		db, err := database.DBinstance()
 		if err != nil {
-			log.Fatalf("Could not connect to the database: %v", err)
+			log.Fatal("Could not connect to database")
 		}
 		repositoryNew := repositorys.NewPostgreSQLRepository(db)
-		products, err := repositoryNew.SelectAllProduct(c)
+		customers, err := repositoryNew.SelectAllCustomer(c)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "cannot get product service.",
+				"error": err.Error(),
 			})
 		}
-
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{
 			"status":  "success",
-			"message": "succesful getting product",
-			"data":    products,
+			"massage": "successful selecting customer.",
+			"data":    customers,
 		})
-
 	}
 }
 
-func CreateProduct() fiber.Handler {
+func CreateCustomer() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		var product models.Product
-		if err := c.BodyParser(&product); err != nil {
+		var customer models.Customer
+		err := c.BodyParser(&customer)
+		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": err.Error(),
 			})
@@ -52,16 +51,16 @@ func CreateProduct() fiber.Handler {
 			})
 		}
 
-		validationErr := validate.Struct(product)
+		validationErr := validate.Struct(customer)
 		if validationErr != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": validationErr.Error(),
 			})
 		}
 
-		product.CreatedBy = userId.(int64)
+		customer.CreatedBy = userId.(int64)
 		repositoryNew := repositorys.NewPostgreSQLRepository(db)
-		err = repositoryNew.CreateProduct(c, &product)
+		err = repositoryNew.CreateCustomer(c, &customer)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),
@@ -69,51 +68,24 @@ func CreateProduct() fiber.Handler {
 		}
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{
 			"status":  "success",
-			"message": "Create product successful",
+			"massage": "create customer successful.",
 		})
-	}
 
+	}
 }
-func GetProduct() fiber.Handler {
+func UpdateCustomer() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		db, err := database.DBinstance()
+		var customer models.Customer
+		err := c.BodyParser(&customer)
 		if err != nil {
-			log.Fatalf("Could not connect to the database: %v", err)
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": err.Error(),
+			})
 		}
-		userId := c.Locals("id")
-		productId := c.Params("id")
-		p, err := strconv.ParseInt(productId, 10, 64)
+		customerId := c.Params("id")
+		p, err := strconv.ParseInt(customerId, 10, 64)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": err.Error(),
-			})
-		}
-		if userId == nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Unauthorized: user not authenticated",
-			})
-		}
-		repositoryNew := repositorys.NewPostgreSQLRepository(db)
-		product, err := repositoryNew.GetProduct(c, p)
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": err.Error(),
-			})
-		}
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{
-			"status":  "success",
-			"message": "succesful getting product",
-			"data":    product,
-		})
-	}
-}
-
-func UpdateProduct() fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		var product models.Product
-		id := c.Params("id")
-		if err := c.BodyParser(&product); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": err.Error(),
 			})
 		}
@@ -127,33 +99,60 @@ func UpdateProduct() fiber.Handler {
 				"error": "Unauthorized: user not authenticated",
 			})
 		}
-
+		validationErr := validate.Struct(customer)
+		if validationErr != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": validationErr.Error(),
+			})
+		}
 		user, ok := userId.(int64)
 		if !ok {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error": "Unauthorized: user not authenticated",
 			})
 		}
-
-		product.UpdatedBy = &user
-		validationErr := validate.Struct(product)
-		if validationErr != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": validationErr.Error(),
-			})
-		}
+		customer.UpdatedBy = &user
 		repositoryNew := repositorys.NewPostgreSQLRepository(db)
-		err = repositoryNew.UpdateProduct(c, &product, id)
+		err = repositoryNew.UpdateCustomer(c, &customer, p)
 		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),
 			})
 		}
 
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"status":  "successful",
+			"massage": "update customer successful.",
+			"data":    customer,
+		})
+	}
+}
+func GetCustomer() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		customerId := c.Params("id")
+		db, err := database.DBinstance()
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+		p, err := strconv.ParseInt(customerId, 10, 64)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+		repositoryNew := repositorys.NewPostgreSQLRepository(db)
+		customer, err := repositoryNew.GetCustomer(c, p)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
 			"status":  "success",
-			"message": "succesful update product",
-			"data":    product,
+			"massage": "successful getting customer.",
+			"data":    customer,
 		})
 	}
 }

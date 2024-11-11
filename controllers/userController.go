@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/VSM1le/jwt2/database"
@@ -27,7 +26,7 @@ func VerifyPassword(userPassword string, providedPassword string) (bool, string)
 	check := true
 	msg := ""
 	if err != nil {
-		msg = fmt.Sprint("email or password is incorrect")
+		msg = "email or password is incorrect:password"
 		check = false
 	}
 	return check, msg
@@ -96,10 +95,10 @@ func Login() fiber.Handler {
 			})
 		}
 		repositoryNew := repositorys.NewPostgreSQLRepository(db)
-		foundUser, err := repositoryNew.GetUserByEmail(c, user.Email)
+		foundUser, err := repositoryNew.GetUserByEmail(c, user)
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": "email or password is incorrect",
+				"error": "email or password is incorrect:email",
 			})
 		}
 		passwordIsValid, msg := VerifyPassword(user.Password, foundUser.Password)

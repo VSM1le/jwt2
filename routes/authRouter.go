@@ -13,4 +13,15 @@ func AuthRoutes(app *fiber.App) {
 	product.Get("/", controllers.SelectProduct())
 	product.Post("/", controllers.CreateProduct())
 	product.Get("/:id", controllers.GetProduct())
+	product.Post("/:id", controllers.UpdateProduct())
+
+	customer := app.Group("/customers", middlewares.Authenticate())
+	customer.Get("/", controllers.SelectCustomer())
+	customer.Post("/", controllers.CreateCustomer())
+	customer.Post("/:id", controllers.UpdateCustomer())
+	customer.Get("/:id", controllers.GetCustomer())
+
+	invoice := app.Group("/invoices", middlewares.Authenticate())
+	invoice.Get("/", controllers.SelectInvoice())
+	invoice.Post("/", controllers.CreateInvoice())
 }
